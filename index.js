@@ -42,6 +42,8 @@ parseFile.then(function(success, error) { //better name variables
 
   var lineNumbersOpenBrackets = new Array(); //holds the line number of each unclosed bracket to find it later
 
+  var pageObjects = new Array(); //holds the line numbers start and end for each object on the page
+
   var j = 0; //holds code line position
   for(var i = 0; i < allLines.length; i++)
   {
@@ -60,37 +62,79 @@ parseFile.then(function(success, error) { //better name variables
     /* Total count for open brackets */
     openAndNotClosedCaryOver = openAndNotClosedCaryOver +  openBrackets - closedBrackets;
 
+    /* we have completed an object */
     if(openAndNotClosedCaryOver==0){
       console.log('line:'+j+'-Completed object');
     }
 
+    /* we have closed a child bracket */
     if(openAndNotClosed < 0){
 
+      //Get the last line number our array started
       var closedLineNumber = (lineNumbersOpenBrackets[lineNumbersOpenBrackets.length-1]);
-      lineNumbersOpenBrackets.pop();
-     console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
+      lineNumbersOpenBrackets.pop(); //remove it from the list now that it has been clsoed;
+      console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
+
+      /* now lets log our object details for later use */
+      var objectLineStart = closedLineNumber; // the line that started the object
+      var objectLineEnd = j;   //the line that ended the object
+
+      /* check the place in the line where the first occurance of { started */
+      var index = allLines[objectLineStart-1].indexOf('{');
+
+      var characterBefore = allLines[objectLineStart-1].substr(index-1,index-1); //grab the character directly before the {
+        console.log("\n\n\n\n"+characterBefore);
+      if(characterBefore == "#"){
+        //we have a dynamic variable in scss so let's grab the next occurance of the item
+        index = getPosition(allLines[objectLineStart-1], "{", 2);
+        console.log("\n\n\n\n"+index);
+      }
+
+      // if we found something
+      if(index>0){
+          var className = trimCode(allLines[objectLineStart-1].substr(0,index));
+
+      } else {
+      //nothing found
+        var className = "jackson";
+      }
+      pageObjects.push([className, objectLineStart, objectLineEnd]);
+
+
 
 
     }
+
+    /* we started a new object*/
     if(openAndNotClosed >= 1){
       console.log('line:'+j+'-we opened an object that was not completed');
       lineNumbersOpenBrackets.push(j);
     }
 
+    /* regular line item */
     if(openBrackets==0 && closedBrackets==0){
       console.log('line:'+j+'-no bracket activity');
     }
 
   }
- console.log(lineNumbersOpenBrackets);
+
+  //console.log(lineNumbersOpenBrackets); // show our array of numbers where objects started should be zero becaue we are removing them
+
   //console.log(result);
+
+  /* show total number of open brackets in this file */
   console.log('openBrackets:'+totalOpenBrackets);
+
+  /* show total number of closed brackets in this file */
   console.log('closedBrackets:'+totalClosedBrackets);
 
+  /* Are all brackets closed on this page ? */
   var unclosedBrackets = (totalOpenBrackets + totalClosedBrackets)%2==1;
   console.log("Are there any open brackets?:"+unclosedBrackets);
 
-  //console.log(success);
+  console.log(pageObjects);
+
+  //console.log(success); //show us our success message from promise
 },
 function(errorResponse) {
      console.log(error);
@@ -119,3 +163,51 @@ function grabLines(filename, callback){
   });
 
 }
+
+
+
+
+
+//
+//
+// var lines = rawFile.result.split('\n');
+//  for(var line = 0; line < lines.length; line++){
+//    console.log(lines[line]);
+//  }
+// };
+// //Remove unwanted characters other than A-z, A-z, ; { }
+//
+
+function trimCode(string){
+  return(string.replace(/[^-A-Za-z0-9!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, ""));
+}
+
+function getPosition(string, subString, index) {
+   return string.split(subString, index).join(subString).length;
+}
+
+
+//
+// //show us what you have
+// //console.log(file);
+//
+//
+// var arrayFile = trimmedFile.match(/[^{}]+/g); //push items into array based on regex
+//
+// for(var i = 1; i < arrayFile.length; i++){
+//     console.log(i + " = " + arrayFile[i]);
+// }
+//
+// //
+//
+//
+// var numberOfBracketsStart = trimmedFile.match(/[^{]+/g); //push items into array based on regex
+//
+//  var count =0
+// for(var i = 1; i < numberOfBracketsStart.length; i++){
+//   count++;
+// }
+// console.log(count);
+//
+// var streetaddress= trimmedFile.substr(0, trimmedFile.indexOf('{'));
+// console.log(streetaddress);
