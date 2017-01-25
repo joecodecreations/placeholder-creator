@@ -83,21 +83,34 @@ parseFile.then(function(success, error) { //better name variables
       var index = allLines[objectLineStart-1].indexOf('{');
 
       var characterBefore = allLines[objectLineStart-1].substr(index-1,index-1); //grab the character directly before the {
-        console.log("\n\n\n\n"+characterBefore);
       if(characterBefore == "#"){
         //we have a dynamic variable in scss so let's grab the next occurance of the item
         index = getPosition(allLines[objectLineStart-1], "{", 2);
-        console.log("\n\n\n\n"+index);
       }
 
       // if we found something
       if(index>0){
           var className = trimCode(allLines[objectLineStart-1].substr(0,index));
 
-      } else {
-      //nothing found
-        var className = "jackson";
       }
+
+      if(className==""){
+        var attempts = 0;
+        while(className=="" && attempts<5){
+          attempts++;
+          var lineAttempt = objectLineStart-1-attempts;
+          if(lineAttempt>=0){
+              if(trimCode(allLines[lineAttempt])!=""){
+              var className = trimCode(allLines[lineAttempt]);
+            }
+          } else {
+           className="Not Found";
+          }
+
+        }
+      }
+
+
       pageObjects.push([className, objectLineStart, objectLineEnd]);
 
 
@@ -165,19 +178,6 @@ function grabLines(filename, callback){
 }
 
 
-
-
-
-//
-//
-// var lines = rawFile.result.split('\n');
-//  for(var line = 0; line < lines.length; line++){
-//    console.log(lines[line]);
-//  }
-// };
-// //Remove unwanted characters other than A-z, A-z, ; { }
-//
-
 function trimCode(string){
   return(string.replace(/[^-A-Za-z0-9!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, ""));
 }
@@ -185,29 +185,3 @@ function trimCode(string){
 function getPosition(string, subString, index) {
    return string.split(subString, index).join(subString).length;
 }
-
-
-//
-// //show us what you have
-// //console.log(file);
-//
-//
-// var arrayFile = trimmedFile.match(/[^{}]+/g); //push items into array based on regex
-//
-// for(var i = 1; i < arrayFile.length; i++){
-//     console.log(i + " = " + arrayFile[i]);
-// }
-//
-// //
-//
-//
-// var numberOfBracketsStart = trimmedFile.match(/[^{]+/g); //push items into array based on regex
-//
-//  var count =0
-// for(var i = 1; i < numberOfBracketsStart.length; i++){
-//   count++;
-// }
-// console.log(count);
-//
-// var streetaddress= trimmedFile.substr(0, trimmedFile.indexOf('{'));
-// console.log(streetaddress);
