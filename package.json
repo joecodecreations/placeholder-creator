@@ -1,0 +1,28 @@
+{
+  "name": "placeholder_creator",
+  "version": "1.0.0",
+  "description": "Looks through existing codebase to find placeholders that could be used to allow more maintainable code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joecodecreations/placeholder-creator.git"
+  },
+  "keywords": [
+    "placeholder",
+    "css",
+    "scss",
+    "find",
+    "search",
+    "maintainable",
+    "code"
+  ],
+  "author": "Joseph Sanchez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joecodecreations/placeholder-creator/issues"
+  },
+  "homepage": "https://github.com/joecodecreations/placeholder-creator#readme"
+}
