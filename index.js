@@ -7,23 +7,6 @@ var path = "./testFile.scss";
 var rawfile = fs.readFileSync(path, "utf8");
 
 var allLines = [];
-var masterList
-
-
-
-
-//
-// grabLines("./testFile.scss", function(line){
-//   // console.log('Our Line:' + line);
-//   allLines.push(line);
-// });
-//
-//
-// for(var i = 1; i < allLines.length; i++){
-//     console.log(i + " = " + allLines[i]);
-// }
-//
-
 
 var parseFile = new Promise(function (resolve, reject) {
      //var u = asyncmethod(some_var); // <-- u is not defined, even if you return result stright, as it's the nature of async
@@ -40,7 +23,6 @@ var parseFile = new Promise(function (resolve, reject) {
        }
 
      });
-
 
 });
 
