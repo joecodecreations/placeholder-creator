@@ -65,7 +65,7 @@ parseFile.then(function(success, error) { //better name variables
 
     /* we have completed an object */
     if(openAndNotClosedCaryOver==0){
-    //  console.log('line:'+j+'-Completed object');
+  //    console.log('line:'+j+'-Completed object');
     }
 
     /* we have closed a child bracket */
@@ -74,7 +74,7 @@ parseFile.then(function(success, error) { //better name variables
       //Get the last line number our array started
       var closedLineNumber = (lineNumbersOpenBrackets[lineNumbersOpenBrackets.length-1]);
       lineNumbersOpenBrackets.pop(); //remove it from the list now that it has been clsoed;
-      //console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
+  //    console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
 
       /* now lets log our object details for later use */
       var objectLineStart = closedLineNumber; // the line that started the object
@@ -118,14 +118,17 @@ parseFile.then(function(success, error) { //better name variables
                 className = trimCode(allLines[lineAttempt]);
 
                 //update our code starting point as well so we include it in it's entirety later on
-                codeStartLine = lineAttempt;
+                codeStartLine = lineAttempt+1;
 
               }
           }
         }
+
+
+      }
+      if(className==""){
         //if are going off the page or we have gone over our attempts then we haven't found anything still
        className="Not Found";
-
       }
       //add our page object information
       // Class Name, Object start and end, Entire code section
@@ -165,49 +168,98 @@ parseFile.then(function(success, error) { //better name variables
   //console.log(pageObjects);
 
 
+
+
+
+
   pageObjects.forEach(function(item){
 
-    var className = item[0],
-    objectLineStart = item[1],
-    objectLineEnd = item[2],
-    codeStartLine = item[3],
-    codeEndline = item[4];
+      var classNameNew = item[0],
+      objectLineStartNew = item[1],
+      objectLineEndNew = item[2],
+      codeStartLineNew = item[3],
+      codeEndlineNew = item[4];
 
-//console.log("LINE:"+className+":"+objectLineStart+":"+objectLineEnd+":"+codeStartLine+":"+codeEndline);
-    var objectCode = "";
+  //console.log("LINE:"+classNameNew+":"+objectLineStartNew+":"+objectLineEndNew+":"+codeStartLineNew+":"+codeEndlineNew);
 
-    for(var linekeeper = codeStartLine; linekeeper < codeEndline; linekeeper++){
-       //check for commented out lines
-        //first two characters in line
-         var firstTwoCharacters = trimWhitespace(allLines[linekeeper-1]).substr(0,2);
-      //   console.log(firstTwoCharacters);
-       if(firstTwoCharacters!="//"&&firstTwoCharacters!="*/"){
-         //if this line isn't commented out let's add it
-         objectCode = objectCode + allLines[linekeeper];
-
-      }
-      if(firstTwoCharacters=="//"||firstTwoCharacters=="*/"){
-        console.log(firstTwoCharacters+" detected on Line: "+linekeeper);
-        console.log("i will not print twice "+i);
-      }
-
-
-    } //end for loop
+//console.log(allLines[codeStartLineNew-1]);
+    var linekeeper = 0;
+    var detected = false;
+     console.log(codeStartLineNew+":"+codeEndlineNew);
+    while(linekeeper <= (codeEndlineNew-codeStartLineNew)-2){
+      var objectCode = "";
+      linekeeper++;
 
 
 
-          //This now contains our code for this object
-          //console.log("ClassName:"+className+"\n\n"+objectCode);
+        //console.log(linekeeper);
+      //  console.log("end"+codeEndline);
+         //check for commented out lines
+          //first two characters in line
+          //console.log(linekeeper);
+          var firstTwoCharacters = trimWhitespace(allLines[codeStartLineNew-1]).substr(0,2);
+           console.log("first:"+firstTwoCharacters);
+         if(firstTwoCharacters!="//"&&firstTwoCharacters!="*/"){
+           //if this line isn't commented out let's add it
+        detected=false;
+            //  objectCode = objectCode + allLines[codeStartLineNew+linekeeper];
+            // console.log(allLines[codeStartLineNew+linekeeper]);
+        }
 
-          //take out spaces
-          var newobjectcode = trimWhitespace(objectCode);
+        if(firstTwoCharacters=="//"||firstTwoCharacters=="*/"){
+        detected=true;
+        }
+
+      } //end for loop
 
 
 
-        //  console.log(newobjectcode);
+       for(var i = (codeStartLineNew-1); i < codeEndlineNew; i++){
+
+         if(detected){
+           //we have a commented out line
+               console.log(firstTwoCharacters+" detected on Line: "+(linekeeper+1));
+         } else {
+           //its safe, this line is not commented out and we can add it
+            objectCode = objectCode + allLines[i];
+        //   var objectCodeNew = objectCode +;
+         //  console.log("not it");
+         }
+var objectCodeNew = objectCode;
+       }
 
 
-  });
+
+
+
+
+
+
+
+         console.log(classNameNew+":"+linekeeper+":"+objectCodeNew+"\n\n\n\n");
+      //console.log(classNameNew+":"+linekeeper); //class with number of lines for the object
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   //console.log(success); //show us our success message from promise
 },
@@ -248,13 +300,7 @@ function trimCode(string){
   /*
     Used to remove unwanted spaces but leave in what we need for parsing code blocks
   */
-  string = string.replace(/[^-A-Za-z0-9\s!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, "");
-  return(string);
-}
-
-function trimWhitespace(string){
-  string = string.replace(/(\r\n|\n|\r|\t|\s|{|})/g,"");
-  return(string);
+  return(string.replace(/[^-A-Za-z0-9!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, ""));
 }
 
 
@@ -264,4 +310,9 @@ function getPosition(string, subString, index) {
     USE: getPosition(stringToCheck, LookingFor, WhichInstance)
   */
    return string.split(subString, index).join(subString).length;
+}
+
+function trimWhitespace(string){
+  string = string.replace(/(\r\n|\n|\r|\t|\s|{|})/g,"");
+  return(string);
 }
