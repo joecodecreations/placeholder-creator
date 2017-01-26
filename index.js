@@ -44,6 +44,7 @@ parseFile.then(function(success, error) { //better name variables
 
   var pageObjects = new Array(); //holds the line numbers start and end for each object on the page
 
+
   var j = 0; //holds code line position
   for(var i = 0; i < allLines.length; i++)
   {
@@ -64,7 +65,7 @@ parseFile.then(function(success, error) { //better name variables
 
     /* we have completed an object */
     if(openAndNotClosedCaryOver==0){
-      console.log('line:'+j+'-Completed object');
+    //  console.log('line:'+j+'-Completed object');
     }
 
     /* we have closed a child bracket */
@@ -73,11 +74,15 @@ parseFile.then(function(success, error) { //better name variables
       //Get the last line number our array started
       var closedLineNumber = (lineNumbersOpenBrackets[lineNumbersOpenBrackets.length-1]);
       lineNumbersOpenBrackets.pop(); //remove it from the list now that it has been clsoed;
-      console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
+      //console.log('line:'+j+'-Closed Inner Bracket which started on line '+closedLineNumber);
 
       /* now lets log our object details for later use */
       var objectLineStart = closedLineNumber; // the line that started the object
       var objectLineEnd = j;   //the line that ended the object
+
+      /* we will set the bounds for our code for this object, if it changes lower, this will get updated */
+      var codeStartLine = objectLineStart;
+      var codeEndline = objectLineEnd;
 
       /* check the place in the line where the first occurance of { started */
       var index = allLines[objectLineStart-1].indexOf('{');
@@ -91,42 +96,54 @@ parseFile.then(function(success, error) { //better name variables
       // if we found something
       if(index>0){
           var className = trimCode(allLines[objectLineStart-1].substr(0,index));
-
       }
 
+      //If we still don't have a class
       if(className==""){
-        var attempts = 0;
-        while(className=="" && attempts<5){
-          attempts++;
-          var lineAttempt = objectLineStart-1-attempts;
+
+        var tries = 0; //stores the number of tries
+        var attempts = 5; //how many many lines back do we want to check
+
+        //until we reach our attempts or until we find a class name
+        while(className=="" && tries<attempts){
+          tries++;
+          //set line to try equal to where we started minus each new line try
+          var lineAttempt = objectLineStart-1-tries;
+          //if we are still within the page bounds
           if(lineAttempt>=0){
+              //check the entire line, if it has something
               if(trimCode(allLines[lineAttempt])!=""){
-              var className = trimCode(allLines[lineAttempt]);
-            }
-          } else {
-           className="Not Found";
+
+                //set our class name to it
+                className = trimCode(allLines[lineAttempt]);
+
+                //update our code starting point as well so we include it in it's entirety later on
+                codeStartLine = lineAttempt;
+
+              }
           }
-
         }
+        //if are going off the page or we have gone over our attempts then we haven't found anything still
+       className="Not Found";
+
       }
+      //add our page object information
+      // Class Name, Object start and end, Entire code section
+      pageObjects.push([className, objectLineStart, objectLineEnd, codeStartLine, codeEndline]);
 
-
-      pageObjects.push([className, objectLineStart, objectLineEnd]);
-
-
-
-
-    }
+    } //if not opened or closed
 
     /* we started a new object*/
     if(openAndNotClosed >= 1){
-      console.log('line:'+j+'-we opened an object that was not completed');
+    //  console.log('line:'+j+'-we opened an object that was not completed');
       lineNumbersOpenBrackets.push(j);
     }
 
+
+
     /* regular line item */
     if(openBrackets==0 && closedBrackets==0){
-      console.log('line:'+j+'-no bracket activity');
+    //  console.log('line:'+j+'-no bracket activity');
     }
 
   }
@@ -136,16 +153,61 @@ parseFile.then(function(success, error) { //better name variables
   //console.log(result);
 
   /* show total number of open brackets in this file */
-  console.log('openBrackets:'+totalOpenBrackets);
+//  console.log('openBrackets:'+totalOpenBrackets);
 
   /* show total number of closed brackets in this file */
-  console.log('closedBrackets:'+totalClosedBrackets);
+//  console.log('closedBrackets:'+totalClosedBrackets);
 
   /* Are all brackets closed on this page ? */
   var unclosedBrackets = (totalOpenBrackets + totalClosedBrackets)%2==1;
-  console.log("Are there any open brackets?:"+unclosedBrackets);
+//  console.log("Are there any open brackets?:"+unclosedBrackets);
 
-  console.log(pageObjects);
+  //console.log(pageObjects);
+
+
+  pageObjects.forEach(function(item){
+
+    var className = item[0],
+    objectLineStart = item[1],
+    objectLineEnd = item[2],
+    codeStartLine = item[3],
+    codeEndline = item[4];
+
+//console.log("LINE:"+className+":"+objectLineStart+":"+objectLineEnd+":"+codeStartLine+":"+codeEndline);
+    var objectCode = "";
+
+    for(var linekeeper = codeStartLine; linekeeper < codeEndline; linekeeper++){
+       //check for commented out lines
+        //first two characters in line
+         var firstTwoCharacters = trimWhitespace(allLines[linekeeper-1]).substr(0,2);
+      //   console.log(firstTwoCharacters);
+       if(firstTwoCharacters!="//"&&firstTwoCharacters!="*/"){
+         //if this line isn't commented out let's add it
+         objectCode = objectCode + allLines[linekeeper];
+
+      }
+      if(firstTwoCharacters=="//"||firstTwoCharacters=="*/"){
+        console.log(firstTwoCharacters+" detected on Line: "+linekeeper);
+        console.log("i will not print twice "+i);
+      }
+
+
+    } //end for loop
+
+
+
+          //This now contains our code for this object
+          //console.log("ClassName:"+className+"\n\n"+objectCode);
+
+          //take out spaces
+          var newobjectcode = trimWhitespace(objectCode);
+
+
+
+        //  console.log(newobjectcode);
+
+
+  });
 
   //console.log(success); //show us our success message from promise
 },
@@ -161,10 +223,14 @@ function(errorResponse) {
 /* Grabs each line of a file that is sent through */
 function grabLines(filename, callback){
 
-  /* USAGE */
-  // grabLines("./testFile.scss", function(line){
-  //   console.log('Our Line:' + line);
-  // });
+  /*
+    Grabs each line of a file that is sent through
+
+    grabLines("./testFile.scss", function(line){
+    console.log('Our Line:' + line);
+   });
+
+   */
 
   var lineReader = require('readline').createInterface({
     input: require('fs').createReadStream(filename)
@@ -179,9 +245,23 @@ function grabLines(filename, callback){
 
 
 function trimCode(string){
-  return(string.replace(/[^-A-Za-z0-9!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, ""));
+  /*
+    Used to remove unwanted spaces but leave in what we need for parsing code blocks
+  */
+  string = string.replace(/[^-A-Za-z0-9\s!"#$%&'()*+,./:;<=>?@[\]-^{|}~]/g, "");
+  return(string);
 }
 
+function trimWhitespace(string){
+  string = string.replace(/(\r\n|\n|\r|\t|\s|{|})/g,"");
+  return(string);
+}
+
+
 function getPosition(string, subString, index) {
+  /*
+    Find instance positions string to string.
+    USE: getPosition(stringToCheck, LookingFor, WhichInstance)
+  */
    return string.split(subString, index).join(subString).length;
 }
